@@ -1,11 +1,12 @@
 {
   "name": "@aaj/db-help",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "indexdb help",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "publish": "npm publish --registry='https://registry.npmjs.org' --access public"
   },
   "files": ["dist"],
   "keywords": [
