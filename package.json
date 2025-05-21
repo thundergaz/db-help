@@ -15,5 +15,8 @@
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
