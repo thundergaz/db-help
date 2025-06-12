@@ -89,6 +89,32 @@ export class IndexDBWrapper {
         });
     }
 
+    /** 批量插入 */
+    async addBatch<T>(storeName: string, dataArray: T[]): Promise<{results: IDBValidKey[], errors: { data: T,  reason: string }[]}> { // 新增批量插入方法
+        if (!this.db) throw new Error('数据库未打开');
+        return new Promise((resolve, reject) => {
+            const transaction = this.db!.transaction(storeName, 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const results: IDBValidKey[] = [];
+            const errors: { data: T,  reason: string }[] = [];
+
+            dataArray.forEach((data, index) => {
+                const request = store.add(data);
+                request.onsuccess = () => results[index] = request.result;
+                request.onerror = (event) => {
+                    event.preventDefault(); // 阻止错误传播到事务，避免事务中止
+                    if (request.error instanceof DOMException && request.error.name === 'ConstraintError') {
+                        // 处理主键冲突（例如，记录已存在）
+                        errors.push({ data, reason: '主键冲突，数据已存在' })
+                    } else {
+                        errors.push({ data, reason: request.error?.message || '未知错误' })
+                    }
+                };
+            });
+            transaction.oncomplete = () => resolve({ results, errors});
+        });
+    }
+
     /** 获取数据（优先使用索引） */
     async get<T>(storeName: string, key: IDBValidKey, indexName?: string): Promise<T | undefined> {
         if (!this.db) throw new Error('数据库未打开');
@@ -105,7 +131,6 @@ export class IndexDBWrapper {
     async put<T>(storeName: string, data: T, indexName?: string): Promise<IDBValidKey> {
         if (!this.db) throw new Error('数据库未打开');
         return new Promise((resolve, reject) => {
-
             const transaction = this.db!.transaction(storeName, 'readwrite');
             const store = transaction.objectStore(storeName);
             // 由于 IDBIndex 上不存在 put 方法，我们需要先通过索引找到对应的主键，再使用主键更新数据
