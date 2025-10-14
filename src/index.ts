@@ -18,6 +18,10 @@ export class IndexDBWrapper {
 
     constructor(private config: DBConfig) { }
 
+    isOpen(): boolean {
+        return this.db !== null;
+    }
+
     /** 打开数据库 */
     async open(): Promise<IDBDatabase> {
         return new Promise((resolve, reject) => {
@@ -90,13 +94,13 @@ export class IndexDBWrapper {
     }
 
     /** 批量插入 */
-    async addBatch<T>(storeName: string, dataArray: T[]): Promise<{results: IDBValidKey[], errors: { data: T,  reason: string }[]}> { // 新增批量插入方法
+    async addBatch<T>(storeName: string, dataArray: T[]): Promise<{ results: IDBValidKey[], errors: { data: T, reason: string }[] }> { // 新增批量插入方法
         if (!this.db) throw new Error('数据库未打开');
         return new Promise((resolve, reject) => {
             const transaction = this.db!.transaction(storeName, 'readwrite');
             const store = transaction.objectStore(storeName);
             const results: IDBValidKey[] = [];
-            const errors: { data: T,  reason: string }[] = [];
+            const errors: { data: T, reason: string }[] = [];
 
             dataArray.forEach((data, index) => {
                 const request = store.add(data);
@@ -111,7 +115,7 @@ export class IndexDBWrapper {
                     }
                 };
             });
-            transaction.oncomplete = () => resolve({ results, errors});
+            transaction.oncomplete = () => resolve({ results, errors });
         });
     }
 
